@@ -7,35 +7,43 @@ import com.example.demo.dto.request.introspecRequest;
 import com.example.demo.dto.response.AuthenticationResponse;
 import com.example.demo.dto.response.UserResponse;
 import com.example.demo.dto.response.introspecResponse;
-import com.example.demo.entity.User;
+import com.example.demo.entity.Users;
+import com.example.demo.enums.RolesEnum;
 import com.example.demo.exception.AppException;
 import com.example.demo.exception.ErrorCode;
 import com.example.demo.maper.UserMaper;
+import com.example.demo.repository.RolesRepository;
 import com.example.demo.repository.UserRepository;
+
 import com.nimbusds.jose.*;
 import com.nimbusds.jose.crypto.MACSigner;
 import com.nimbusds.jose.crypto.MACVerifier;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import lombok.experimental.NonFinal;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.access.prepost.PostAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 
 import java.text.ParseException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 
 @Service
+@Slf4j
 public class UserService {
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private RolesRepository rolesRepository;
 
     @Autowired
     private UserMaper userMaper;
@@ -46,39 +54,51 @@ public class UserService {
 
     PasswordEncoder encoder = new BCryptPasswordEncoder(10);
 
-    public List<User> getAll() {
+    public List<Users> getAll() {
         return userRepository.findAll();
     }
 
-    @PostAuthorize("returnObject.id == authentication.name")
-    public UserResponse getByID(Long id) {
-        return userMaper.userResponse(userRepository.findById(id).orElseThrow(
-                () -> new RuntimeException("User not found")));
+    public List<UserResponse> getUsers() {
+        return userRepository.findAll().stream().map(userMaper::userResponse).toList();
     }
 
-    public User createUser(UserCreateRequest request) {
-//        User user = new User();
+//    @PostAuthorize("returnObject.id == authentication.name")
+    public UserResponse getByID(Long id) {
+        return userMaper.userResponse(userRepository.findById(id).orElseThrow(
+                () -> new RuntimeException("Users not found")));
+    }
+    public UserResponse getMyinfo(){
+        var context = SecurityContextHolder.getContext();
+        String name = context.getAuthentication().getName();
+        Users users = userRepository.findByUsername(name).orElseThrow(
+                () -> new AppException(ErrorCode.USER_NOT_EXITS));
+        return userMaper.userResponse(users);
+    }
+
+    public Users createUser(UserCreateRequest request) {;
         if (userRepository.existsUserByUsername(request.getUsername()))
             throw new AppException(ErrorCode.USER_EXITS);
-        User user = userMaper.toUser(request);
-        user.setPassword(encoder.encode(request.getPassword()));
-//        user.setUsername(request.getUsername());
-//        user.setPassword(request.getPassword());
-//        user.setEmail(request.getEmail());
+        Users users = userMaper.toUser(request);
+        users.setPassword(encoder.encode(request.getPassword()));
 
-        return userRepository.save(user);
+        HashSet<String> roles = new HashSet<>();
+        roles.add(RolesEnum.USER.name());
+        users.setRoles(roles);
+
+        return userRepository.save(users);
     }
 
     public UserResponse updateUser(UserUpdateRequest request, Long id) {
-        User user = userRepository.findById(id).orElseThrow(() -> new RuntimeException("User not found"));
-        userMaper.updateUser(user, request);
-        user.setPassword(encoder.encode(request.getPassword()));
-//        user.setUsername(request.getUsername());
-//        user.setPassword(request.getPassword());
-//        user.setEmail(request.getEmail());
-//        user.setUpdated_at(LocalDateTime.now());
+        Users users = userRepository.findById(id).orElseThrow(() -> new RuntimeException("Users not found"));
+        userMaper.updateUser(users, request);
+        users.setPassword(encoder.encode(request.getPassword()));
 
-        return userMaper.userResponse(userRepository.save(user));
+
+        HashSet<String> roles = new HashSet<>();
+        roles.add(RolesEnum.USER.name());
+        users.setRoles((Set<String>) roles);
+
+        return userMaper.userResponse(userRepository.save(users));
     }
 
     public void deleteUser(Long id) {
@@ -91,7 +111,7 @@ public class UserService {
         boolean authentication = encoder.matches(request.getPassword(), user.getPassword());
 
         if (!authentication) throw new AppException(ErrorCode.UNCCATEGORIZEd);
-        var token = generraterToken(request.getUsername());
+        var token = generraterToken(user);
 
         return AuthenticationResponse.builder()
                 .token(token)
@@ -99,16 +119,16 @@ public class UserService {
                 .build();
     }
 
-    private String generraterToken(String username) {
+    private String generraterToken(Users users) {
         JWSHeader jwsHeader = new JWSHeader(JWSAlgorithm.HS512);
 
         JWTClaimsSet claimsSet = new JWTClaimsSet.Builder()
-                .subject(username)
+                .subject(users.getUsername())
                 .issuer("thang.com")
                 .issueTime(new Date())
                 .expirationTime(new Date(Instant.now()
                         .plus(1, ChronoUnit.HOURS).toEpochMilli()))
-                .claim("customClaim", "Custom")
+                .claim("scope", buildScope(users))
                 .build();
         Payload payload = new Payload(claimsSet.toJSONObject());
         JWSObject jwsObject = new JWSObject(jwsHeader, payload);
@@ -133,5 +153,11 @@ public class UserService {
         return introspecResponse.builder()
                 .valid(verified && expirationTime.after(new Date()))
                 .build();
+    }
+    private String buildScope(Users users){
+        StringJoiner stringJoiner = new StringJoiner(" ");
+        if (!CollectionUtils.isEmpty(users.getRoles()))
+            users.getRoles().forEach(stringJoiner::add);
+        return stringJoiner.toString();
     }
 }

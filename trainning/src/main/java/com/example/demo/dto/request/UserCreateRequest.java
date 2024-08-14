@@ -9,6 +9,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Set;
 
 @NoArgsConstructor
 @AllArgsConstructor
@@ -22,7 +24,7 @@ public class UserCreateRequest {
     private String password;
     private String email;
     private LocalDateTime created_at;
-
+    private Set<String> roles;
     public LocalDateTime getCreated_at() {
         setCreated_at(LocalDateTime.now());
         return created_at;
