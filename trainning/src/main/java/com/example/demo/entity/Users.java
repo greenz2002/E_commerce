@@ -4,7 +4,6 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Set;
 
 
@@ -25,6 +24,9 @@ public class Users {
     private LocalDateTime created_at;
     private LocalDateTime updated_at;
 
-    @ElementCollection
-    private Set<String> roles;
+//    @ElementCollection
+//    private Set<String> role;
+
+    @ManyToMany
+    private Set<Roles> roles;
 }

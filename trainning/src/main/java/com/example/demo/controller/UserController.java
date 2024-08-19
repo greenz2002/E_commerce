@@ -21,7 +21,7 @@ import java.text.ParseException;
 import java.util.List;
 
 @RestController
-@RequestMapping("/user")
+@RequestMapping("/users")
 @Slf4j
 public class UserController {
     @Autowired
@@ -37,12 +37,12 @@ public class UserController {
         return userService.getByID(id);
     }
 
-//    @GetMapping("/myInfo")
-//    public ApiResponse<UserResponse> getMyInfo() {
-//        return ApiResponse.<UserResponse>builder()
-//                .result(userService.getMyinfo())
-//                .build();
-//    }
+    @GetMapping("/myInfo")
+    public ApiResponse<UserResponse> getMyInfo() {
+        return ApiResponse.<UserResponse>builder()
+                .result(userService.getMyinfo())
+                .build();
+    }
 
     @GetMapping
     ApiResponse<List<UserResponse>> getUser(){

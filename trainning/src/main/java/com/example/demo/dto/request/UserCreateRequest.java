@@ -1,6 +1,7 @@
 package com.example.demo.dto.request;
 
 
+import com.example.demo.entity.Roles;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
@@ -24,7 +25,7 @@ public class UserCreateRequest {
     private String password;
     private String email;
     private LocalDateTime created_at;
-    private Set<String> roles;
+    private Set<Integer> roles;
     public LocalDateTime getCreated_at() {
         setCreated_at(LocalDateTime.now());
         return created_at;

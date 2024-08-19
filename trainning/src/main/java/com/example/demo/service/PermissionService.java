@@ -15,22 +15,23 @@ import java.util.List;
 public class PermissionService {
     @Autowired
     private PermissionRepository permissionRepository;
+    @Autowired
     PermissionMaper permissionMaper;
 
-    PermissionReponse create(PermissionRequest request) {
+    public PermissionReponse create(PermissionRequest request) {
         Permission permission = permissionMaper.toPermission(request);
         permission = permissionRepository.save(permission);
         return permissionMaper.toPermissionReponse(permission);
     }
 
-    private List<PermissionReponse> getAll() {
+    public List<PermissionReponse> getAll() {
         return permissionRepository.findAll()
                 .stream()
                 .map(permissionMaper::toPermissionReponse)
                 .toList();
     }
 
-    private void delete(Long id) {
+    public void delete(Integer id) {
         permissionRepository.deleteById(id);
     }
 }

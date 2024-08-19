@@ -81,9 +81,8 @@ public class UserService {
         Users users = userMaper.toUser(request);
         users.setPassword(encoder.encode(request.getPassword()));
 
-        HashSet<String> roles = new HashSet<>();
-        roles.add(RolesEnum.USER.name());
-        users.setRoles(roles);
+        var roles = rolesRepository.findAllById(request.getRoles());
+        users.setRoles(new HashSet<>(roles));
 
         return userRepository.save(users);
     }
@@ -93,10 +92,8 @@ public class UserService {
         userMaper.updateUser(users, request);
         users.setPassword(encoder.encode(request.getPassword()));
 
-
-        HashSet<String> roles = new HashSet<>();
-        roles.add(RolesEnum.USER.name());
-        users.setRoles((Set<String>) roles);
+        var roles = rolesRepository.findAllById(request.getRoles());
+        users.setRoles(new HashSet<>(roles));
 
         return userMaper.userResponse(userRepository.save(users));
     }
@@ -157,7 +154,11 @@ public class UserService {
     private String buildScope(Users users){
         StringJoiner stringJoiner = new StringJoiner(" ");
         if (!CollectionUtils.isEmpty(users.getRoles()))
-            users.getRoles().forEach(stringJoiner::add);
+            users.getRoles().forEach(roles -> {
+                stringJoiner.add(roles.getName());
+                if (!CollectionUtils.isEmpty(roles.getPermissions()))
+                roles.getPermissions().forEach(permission -> stringJoiner.add(permission.getName()));
+            });
         return stringJoiner.toString();
     }
 }

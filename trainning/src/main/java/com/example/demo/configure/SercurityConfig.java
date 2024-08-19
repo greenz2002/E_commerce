@@ -1,21 +1,17 @@
 package com.example.demo.configure;
 
 
-
 import com.example.demo.enums.RolesEnum;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.convert.converter.Converter;
 import org.springframework.http.HttpMethod;
-import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
-import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
@@ -29,7 +25,7 @@ import javax.crypto.spec.SecretKeySpec;
 @EnableWebSecurity
 public class SercurityConfig {
 
-    private final String[] PUBLIC_ENPOINT = {"/user/introspec", "/user/login"};
+    private final String[] PUBLIC_ENPOINT = {"/users/introspec", "/users/login"};
     @Value("${jwt.signerKey}")
     private String signkey;
 
@@ -37,7 +33,7 @@ public class SercurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.authorizeHttpRequests(request ->
                 request .requestMatchers(HttpMethod.POST, PUBLIC_ENPOINT).permitAll()
-                        .requestMatchers(HttpMethod.GET, "/user")
+                        .requestMatchers(HttpMethod.GET, "/users")
 //                        .hasAuthority("ROLES_ADMIN")
                         .hasRole(RolesEnum.ADMIN.name())
                         .anyRequest().authenticated()
@@ -52,7 +48,7 @@ public class SercurityConfig {
 
     JwtAuthenticationConverter jwtAuthenticationConverter() {
         JwtGrantedAuthoritiesConverter jwtGrantedAuthoritiesConverter = new JwtGrantedAuthoritiesConverter();
-        jwtGrantedAuthoritiesConverter.setAuthorityPrefix("ROLES_");
+        jwtGrantedAuthoritiesConverter.setAuthorityPrefix("ROLE_");
 
         JwtAuthenticationConverter jwtAuthenticationConverter = new JwtAuthenticationConverter();
         jwtAuthenticationConverter.setJwtGrantedAuthoritiesConverter(jwtGrantedAuthoritiesConverter);

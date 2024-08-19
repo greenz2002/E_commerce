@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
+import java.util.Set;
 
 @NoArgsConstructor
 @AllArgsConstructor
@@ -16,6 +17,7 @@ public class UserUpdateRequest {
     private String password;
     private String email;
     private LocalDateTime updated_at;
+    private Set<Integer> roles;
 
     public LocalDateTime getUpdated_at() {
         setUpdated_at(LocalDateTime.now());

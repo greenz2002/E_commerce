@@ -1,5 +1,6 @@
 package com.example.demo.dto.response;
 
+import com.example.demo.entity.Roles;
 import lombok.*;
 
 import java.time.LocalDateTime;
@@ -19,5 +20,5 @@ public class UserResponse {
     private LocalDateTime created_at;
     private LocalDateTime updated_at;
 
-    private Set<String> roles;
+    private Set<RoleReponse> roles;
 }
